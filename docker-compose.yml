@@ -11,10 +11,13 @@ services:
       - "5000:5000"
 
   frontend:
-    build: ./client
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://13.60.33.20:5000/api
     container_name: frontend1
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - backend
