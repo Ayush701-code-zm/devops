@@ -68,7 +68,7 @@ function App() {
     );
   }
 
-let ayush = 'unused variable to check actions'
+// let ayush = 'unused variable to check actions'
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
