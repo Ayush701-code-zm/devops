@@ -68,4 +68,4 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
         run: |
-          ssh -i ec2_key.pem ${EC2_USER}@${EC2_HOST} 'set -e; if [ ! -d "${EC2_APP_DIR}/.git" ]; then rm -rf "${EC2_APP_DIR}"; git clone https://github.com/Ayush701-code-zm/devops.git "${EC2_APP_DIR}"; fi; cd "${EC2_APP_DIR}"; git fetch --all; git reset --hard origin/${{ github.ref_name }}; docker compose up -d --build; docker image prune -f; docker compose ps' 
+          ssh -i ec2_key.pem ${EC2_USER}@${EC2_HOST} 'set -e; APP_DIR="${EC2_APP_DIR:-/home/ec2-user/devops}"; if [ ! -d "$APP_DIR/.git" ]; then rm -rf "$APP_DIR"; git clone https://github.com/Ayush701-code-zm/devops.git "$APP_DIR"; fi; cd "$APP_DIR"; git fetch --all; git reset --hard origin/${{ github.ref_name }}; docker compose up -d --build; docker image prune -f; docker compose ps' 
