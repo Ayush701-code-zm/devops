@@ -1,10 +1,10 @@
 name: build-and-lint
 
 on:
-push:
-branches: [ "master", "dev" ]
-pull_request:
-branches: [ "master", "dev" ]
+  push:
+    branches: [ "master", "ayush" ]
+  pull_request:
+    branches: [ "master", "ayush" ]
 
 jobs:
   build-and-lint:
