@@ -15,24 +15,49 @@ pipeline {
             }
         }
 
-        stage('Prepare .env') {
+        stage('Verify Docker') {
             steps {
                 sh '''
-                echo "Preparing server .env ..."
-                mkdir -p server
-                cat > server/.env << EOF
-                port=${PORT}
-                MONGO_URI=${MONGODB_URI}
-                EOF
-                cat server/.env
-
-                echo "Preparing client .env ..."
-                mkdir -p client
-                cat > client/.env << EOF
-                VITE_API_URL=${API_URL}
-                EOF
-                cat client/.env
+                echo "Verifying Docker installation and permissions..."
+                if ! command -v docker >/dev/null 2>&1; then
+                  echo "Docker is not installed or not on PATH." >&2
+                  exit 127
+                fi
+                docker version >/dev/null 2>&1 || { echo "Unable to talk to Docker daemon." >&2; exit 127; }
+                # Check access to Docker socket
+                if ! docker ps >/dev/null 2>&1; then
+                  echo "Docker is installed but Jenkins doesn't have permission to access it." >&2
+                  echo "Hint: add 'jenkins' user to 'docker' group and restart Jenkins, or mount /var/run/docker.sock." >&2
+                  ls -l /var/run/docker.sock || true
+                  id || true
+                  exit 127
+                fi
+                echo "Detecting docker compose command..."
+                if command -v docker-compose >/dev/null 2>&1; then
+                  echo "docker-compose found"
+                else
+                  docker compose version >/dev/null 2>&1 || {
+                    echo "Neither docker compose plugin nor docker-compose binary found." >&2
+                    exit 127
+                  }
+                fi
                 '''
+                script {
+                    def composeCmd = sh(script: 'if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; else echo "docker compose"; fi', returnStdout: true).trim()
+                    env.COMPOSE_CMD = composeCmd
+                }
+            }
+        }
+
+        stage('Prepare .env') {
+            steps {
+                sh 'mkdir -p server client'
+                writeFile file: 'server/.env', text: """port=${PORT}
+MONGO_URI=${MONGODB_URI}
+"""
+                writeFile file: 'client/.env', text: """VITE_API_URL=${API_URL}
+"""
+                sh 'echo "server/.env:" && cat server/.env && echo "client/.env:" && cat client/.env'
             }
         }
 
@@ -52,9 +77,9 @@ pipeline {
             steps {
                 sh '''
                 echo "Starting docker compose..."
-                docker compose -f docker-compose.yml up -d --build
+                ${COMPOSE_CMD} -f docker-compose.yml up -d --build
                 echo "Showing the running containers..."
-                docker compose ps
+                ${COMPOSE_CMD} ps
                 '''
             }
         }
