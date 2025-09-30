@@ -1,21 +1,48 @@
 services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mern-net
+
   backend:
-    build: ./server
-    container_name: backend1
-    restart: always
-    env_file:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: unless-stopped
+    env_file: 
       - ./server/.env
+    environment:
+      - PORT=5000
     ports:
       - "5000:5000"
+    depends_on:
+      - mongo
+    networks:
+      - mern-net
 
   frontend:
     build:
       context: ./client
+      dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://13.60.33.20:5000/api
-    container_name: frontend1
-    restart: always
+        VITE_API_URL: http://localhost:5000/api
+    container_name: frontend
+    restart: unless-stopped
     ports:
       - "3001:3001"
     depends_on:
       - backend
+    networks:
+      - mern-net
+
+networks:
+  mern-net:
+    driver: bridge
+
+volumes:
+  mongo_data:

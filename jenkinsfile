@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    environment{
+
+    FRONTEND_IMAGE = "mern-frontend:jenkins"
+    BACKEND_IMAGE = "mern-backend:jenkins"
+    PORT= "5000"
+    MONGODB_URI= "mongodb://mongo:27017/cruddb"
+    API_URL = "http://localhost:5000/api"
+    }
+    
+    stages{
+        stage('Checkout Code'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Ayush701-code-zm/devops.git'
+            }
+        }
+        stage('Prepare .env'){
+            steps{
+               sh '''
+               echo "Preparing server .env ..."
+               mkdir -p server
+               cat > server/.env << EOF
+               port=${PORT}
+               MONGO_URI=${MONGODB_URI}
+               EOF
+               echo "server/.env created:"
+               cat server/.env
+               '''
+
+            }
+        }
+        stage('Build Docker Images'){
+            steps{
+                sh '''
+                echo "Building backend image..."
+                docker build -t ${BACKEND_IMAGE} ./server
+
+                echo "Building frontend image..."
+                docker build -t ${FRONTEND_IMAGE} ./client --build-arg VITE_API_URL=${API_URL}
+                '''
+            }
+        }
+        stage('Run with Docker Compose'){
+            steps{
+                sh '''
+                echo "Starting docker compose..."
+                docker compose up -d --build
+                echo "Showing the running containers..."
+                docker compose ps
+                ''' 
+            }
+        }
+    }
+}
