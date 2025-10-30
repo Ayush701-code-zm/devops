@@ -11,7 +11,7 @@ echo "=========================================="
 echo "Step 1: Updating system packages..."
 sudo dnf update -y
 
-# Step 2: Install Docker
+# Step 2: Install
 echo "Step 2: Installing Docker..."
 sudo dnf install -y docker
 
